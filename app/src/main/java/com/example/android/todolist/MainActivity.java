@@ -16,14 +16,18 @@
 
 package com.example.android.todolist;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 
 import com.example.android.todolist.database.AppDatabase;
@@ -88,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                         List<TaskEntry> entries = mAdapter.getmTaskEntries();
                         //Deleting the entry from the position database, using position of ViewHolder
                         mDb.taskDao().deleteTask(entries.get(position));
-                        retrieveTasks();
                     }
                 });
             }
@@ -109,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                 startActivity(addTaskIntent);
             }
         });
+
+        retrieveTasks();
     }
 
     @Override
@@ -119,28 +124,18 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
         startActivity(intent);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        retrieveTasks();
-    }
 
     private void retrieveTasks() {
-        /**
-         * First we are loading the entries with diskIO executor, then we are updating the
-         * adapter by running it in mainUI thread.
-         * */
-        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+
+        final LiveData<List<TaskEntry>> task = mDb.taskDao().loadAllTask();
+        task.observe(this, new Observer<List<TaskEntry>>() {
             @Override
-            public void run() {
-                final List<TaskEntry> taskEntries = mDb.taskDao().loadAllTask();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.setTasks(taskEntries);
-                    }
-                });
+            public void onChanged(@Nullable List<TaskEntry> taskEntries) {
+                Log.d(TAG, "Receiving database update from LiveData");
+                mAdapter.setTasks(taskEntries);
             }
         });
+
     }
+
 }

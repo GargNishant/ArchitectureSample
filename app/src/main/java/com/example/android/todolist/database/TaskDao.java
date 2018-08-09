@@ -1,5 +1,6 @@
 package com.example.android.todolist.database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -16,7 +17,7 @@ public interface TaskDao {
      * This Query is used for selecting. Returns Objects which are mapped.
      * */
     @Query("SELECT * FROM task ORDER BY priority ")
-    List<TaskEntry> loadAllTask();
+    LiveData<List<TaskEntry>> loadAllTask();
 
     /**
      * Inserts the given POJO into database.
@@ -34,6 +35,6 @@ public interface TaskDao {
     void deleteTask(TaskEntry taskEntry);
 
     @Query("SELECT * FROM task WHERE id = :id")
-    TaskEntry loadTaskById(int id);
+    LiveData<TaskEntry> loadTaskById(int id);
 
 }
